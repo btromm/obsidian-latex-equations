@@ -270,11 +270,23 @@ a.equation-link:hover {
 }
 
 .equation-sidebar-preview {
-	font-size: 11px;
-	color: var(--text-muted);
-	font-family: var(--font-monospace);
-	white-space: nowrap;
-	overflow: hidden;
-	text-overflow: ellipsis;
+	margin-top: 4px;
+	overflow-x: auto;
+	overflow-y: hidden;
 	max-width: 100%;
+}
+
+.equation-sidebar-math {
+	transform: scale(0.7);
+	transform-origin: left center;
+	color: var(--text-muted);
+}
+
+.equation-sidebar-math mjx-container {
+	margin: 0 !important;
+}
+
+.equation-sidebar-math mjx-container[display="true"] {
+	display: inline !important;
+	text-align: left !important;
 }

@@ -135,28 +135,74 @@ class EquationSidebarView extends ItemView {
 			// Create clickable element
 			const link = item.createDiv({ cls: "equation-sidebar-link" });
 
-			// Display name: use custom block ID if present, otherwise "Eq. x"
-			const displayName = equation.blockId
-				? `^${equation.blockId}`
-				: `Eq. ${equation.equationNumber}`;
+			// Display name: formatted from block ID or equation number
+			const displayName = this.formatEquationDisplayName(equation.blockId, equation.equationNumber);
 
 			// Create the main label
 			const label = link.createSpan({ cls: "equation-sidebar-label" });
 			label.textContent = displayName;
 
-			// Add equation preview (truncated)
+			// Add rendered equation preview
 			const preview = link.createDiv({ cls: "equation-sidebar-preview" });
-			const previewText =
-				equation.content.length > 40
-					? equation.content.substring(0, 40) + "..."
-					: equation.content;
-			preview.textContent = previewText;
+
+			// Render the equation using MathJax
+			this.renderEquationPreview(preview, equation.content);
 
 			// Click handler to navigate to equation
 			link.addEventListener("click", () => {
 				this.navigateToEquation(equation);
 			});
 		}
+	}
+
+	/**
+	 * Render an equation preview using MathJax
+	 */
+	private async renderEquationPreview(container: HTMLElement, content: string) {
+		// Create a math element for MathJax to process
+		const mathEl = container.createDiv({ cls: "equation-sidebar-math" });
+
+		// Use display math mode but scaled down for preview
+		mathEl.innerHTML = `\\[${content}\\]`;
+
+		// Use MathJax to render the equation
+		try {
+			// @ts-ignore - MathJax is available globally in Obsidian
+			if (window.MathJax && window.MathJax.typesetPromise) {
+				// @ts-ignore
+				await window.MathJax.typesetPromise([mathEl]);
+			}
+		} catch (e) {
+			// Fallback to raw text if MathJax fails
+			mathEl.textContent = content.length > 50 ? content.substring(0, 50) + "..." : content;
+		}
+	}
+
+	/**
+	 * Format a block ID into a human-readable display name
+	 * - "^eq-11" → "Equation 11"
+	 * - "^value-function" → "Value function"
+	 * - "^q-value" → "Q value"
+	 */
+	private formatEquationDisplayName(blockId: string | null, equationNumber: number): string {
+		if (!blockId) {
+			return `Equation ${equationNumber}`;
+		}
+
+		// Check if it's an auto-generated eq-N pattern
+		const eqMatch = blockId.match(/^eq-(\d+)$/);
+		if (eqMatch) {
+			return `Equation ${eqMatch[1]}`;
+		}
+
+		// For custom names: remove dashes, convert to sentence case
+		// "value-function" → "Value function"
+		// "q-value" → "Q value"
+		const formatted = blockId
+			.replace(/-/g, ' ')  // Replace dashes with spaces
+			.replace(/^(\w)/, (match) => match.toUpperCase());  // Capitalize first letter only
+
+		return formatted;
 	}
 
 	/**
